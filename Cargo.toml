@@ -14,6 +14,7 @@ license-file = "LICENSE"
 [workspace]
 members = [
     "rsip-derives",
+    "rsip-wrapper",
 ]
 
 [dependencies]
