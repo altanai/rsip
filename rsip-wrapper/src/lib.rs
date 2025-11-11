@@ -14,6 +14,7 @@ lazy_static! {
     static ref RUNNING: AtomicBool = AtomicBool::new(false);
 }
 
+/// Initialize the rsip-wrapper library
 #[no_mangle]
 pub extern "C" fn rsip_init() -> bool {
     // Set running to false and clear callback
@@ -35,6 +36,7 @@ pub extern "C" fn rsip_clear_event_callback() {
     *guard = None;
 }
 
+/// Internal helper to call the registered callback
 fn call_callback(event: &str, payload: &str) {
     let guard = CALLBACK.lock().unwrap();
     if let Some(cb) = *guard {
@@ -45,6 +47,8 @@ fn call_callback(event: &str, payload: &str) {
     }
 }
 
+/// Start a UDP listener on the specified port
+/// Incoming SIP messages will trigger the registered callback with event "sip_rx"
 #[no_mangle]
 pub extern "C" fn rsip_start_udp_listener(port: u16) -> bool {
     if RUNNING.load(Ordering::SeqCst) {
@@ -69,7 +73,7 @@ pub extern "C" fn rsip_start_udp_listener(port: u16) -> bool {
         let mut buf = vec![0u8; 65535];
         while RUNNING.load(Ordering::SeqCst) {
             match socket_clone.recv_from(&mut buf) {
-                Ok((n, src)) => {
+                Ok((n, _src)) => {
                     if n == 0 { continue; }
                     // Try to parse SIP message using rsip (best-effort) and forward raw message
                     let msg = String::from_utf8_lossy(&buf[..n]).to_string();
@@ -92,6 +96,7 @@ pub extern "C" fn rsip_start_udp_listener(port: u16) -> bool {
     true
 }
 
+/// Shutdown the UDP listener and clean up resources
 #[no_mangle]
 pub extern "C" fn rsip_shutdown() {
     // signal thread to stop
@@ -139,9 +144,10 @@ pub extern "C" fn rsip_version() -> *const c_char {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicBool, Ordering};
-    use std::sync::Arc;
+    use std::sync::atomic::Ordering;
 
+    /// Test the initialization function
+    /// This test ensures that rsip_init sets the RUNNING flag to false
     #[test]
     fn test_rsip_init() {
         let result = rsip_init();
@@ -149,6 +155,7 @@ mod tests {
         assert!(!RUNNING.load(Ordering::SeqCst), "RUNNING should be false after init");
     }
 
+    /// Test the version function which returns a static string
     #[test]
     fn test_rsip_version() {
         let ptr = rsip_version();
@@ -158,6 +165,7 @@ mod tests {
         assert_eq!(s, "rsip-wrapper-0.1.0", "version string should match");
     }
 
+    /// Test registering and clearing the callback
     #[test]
     fn test_callback_registration() {
         rsip_init();
@@ -175,6 +183,7 @@ mod tests {
         assert!(guard.is_none(), "callback should be cleared");
     }
 
+    /// Test sending UDP with null pointers
     #[test]
     fn test_udp_send_with_null_pointers() {
         // rsip_send_udp should return false if dest_ip is null
@@ -187,6 +196,9 @@ mod tests {
         assert!(!result, "should return false for null data");
     }
 
+    /// Test sending UDP to an invalid address
+    /// This test may not always fail depending on the OS behavior,
+    /// so we just ensure it handles the case without crashing.
     #[test]
     fn test_udp_send_invalid_address() {
         // Attempt to send to an address that may fail (invalid IP)
@@ -198,6 +210,7 @@ mod tests {
         println!("send to invalid addr returned: {}", result);
     }
 
+    /// Test starting the UDP listener when already running
     #[test]
     fn test_listener_already_running() {
         rsip_init();
