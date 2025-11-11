@@ -1,1 +1,1 @@
-target
+target# Ignore IDE folders\n.vs/\n.vscode/

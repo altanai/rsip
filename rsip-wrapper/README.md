@@ -2,6 +2,8 @@
 
 This document describes the minimal hybrid approach implemented in this crate: a small Rust "transport & UA" wrapper around `rsip` that exposes a compact C API for integration with FreeSWITCH (or other C hosts).
 
+![diagrm](mermaid-diagram-2025-11-11-120048.png)
+
 ## Goals
 
 - Provide a small, safe C ABI surface so a host (FreeSWITCH module) can receive SIP messages from Rust and instruct Rust to send SIP messages.
