@@ -1,0 +1,11 @@
+[package]
+name = "rsip-wrapper"
+version = "0.1.0"
+edition = "2018"
+description = "Minimal FFI wrapper around rsip: a small transport/UA and C API for integration with FreeSWITCH"
+license-file = "../LICENSE"
+crate-type = ["cdylib"]
+
+[dependencies]
+lazy_static = "1.4"
+rsip = { path = ".." }
